@@ -6,16 +6,26 @@ const rootDir = require("../util/path");
 
 const router = express.Router();
 
+const products = [];
 //admin/add-product => GET
 router.get("/add-product", (request, response, next) => {
-  //use allow us to use middleware functions
-  response.sendFile(path.join(rootDir, "views", "add-product.html"));
+  //render .pug file
+  response.render("add-product", {
+    pageTitle: "Add Product",
+    path: "/admin/add-product",
+    formsCSS: true,
+    productCSS: true,
+    activeAddProduct: true,
+  });
 });
 
 //admin/add-product => POST
 router.post("/add-product", (request, response, next) => {
-  console.log(request.body);
+  products.push({ title: request.body.title });
   response.redirect("/");
 });
 
-module.exports = router;
+// module.exports = router;
+
+exports.routes = router;
+exports.products = products;
