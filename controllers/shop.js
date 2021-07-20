@@ -3,37 +3,47 @@ const Cart = require("../models/cart");
 const { response } = require("express");
 
 exports.getProducts = (request, response, next) => {
-  const products = Product.fetchAll((products) => {
-    response.render("shop/product-list", {
-      prods: products,
-      pageTitle: "Shop",
-      path: "/products",
-    }); //use default template engine
-  });
+  Product.fetchAll()
+    .then(([rows, fieldData]) => {
+      response.render("shop/product-list", {
+        prods: rows,
+        pageTitle: "All Products",
+        path: "/products",
+      }); //use default template engine
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
 exports.getProductById = (request, response, next) => {
   const productId = request.params.productId;
-  
-  Product.findById(productId, (product) => {
-    response.render("shop/product-detail", {
-      product: product,
-      pageTitle: product.pageTitle,
-      path: "/products",
-    });
-  });
+
+  Product.findById(productId)
+    .then(([product]) => {
+      response.render("shop/product-detail", {
+        product: product[0],
+        pageTitle: product[0].title,
+        path: "/products",
+      });
+    })
+    .catch((err) => console.log(err));
 
   // response.redirect("/");
 };
 
 exports.getIndex = (request, response, next) => {
-  const products = Product.fetchAll((products) => {
-    response.render("shop/index", {
-      prods: products,
-      pageTitle: "All Products",
-      path: "/",
-    }); //use default template engine
-  });
+  Product.fetchAll()
+    .then(([rows, fieldData]) => {
+      response.render("shop/index", {
+        prods: rows,
+        pageTitle: "Shop",
+        path: "/",
+      }); //use default template engine
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
 exports.getCart = (request, response, next) => {

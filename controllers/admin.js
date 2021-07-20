@@ -38,8 +38,10 @@ exports.postAddProduct = (request, response, next) => {
 
   const product = new Product(null, title, imageUrl, description, price);
 
-  product.save();
-  response.redirect("/");
+  product
+    .save()
+    .then(() => response.redirect("/"))
+    .catch((err) => console.log(err));
 };
 
 exports.postEditProduct = (request, response, next) => {
@@ -64,7 +66,7 @@ exports.postEditProduct = (request, response, next) => {
 exports.postDeleteProduct = (request, response, next) => {
   const prodId = request.body.productId;
   Product.deleteById(prodId);
-  response.redirect('/admin/products');
+  response.redirect("/admin/products");
 };
 
 exports.getProducts = (request, response, next) => {
