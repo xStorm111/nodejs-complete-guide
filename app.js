@@ -4,8 +4,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 // const expressHbs = require("express-handlebars");
 
-const adminData = require("./routes/admin");
+const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+
+const errorController = require("./controllers/error");
 
 const app = express();
 
@@ -28,11 +30,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public"))); //for static files we will assume that we are allready inside public folder
 
 //order matter, route with only '/' should be the last
-app.use("/admin", adminData.routes);
+app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 
-app.use((request, response, next) => {
-  response.status(404).render("404", { pageTitle: "Page Not Found", path: "" });
-});
+app.use(errorController.get404);
 
 app.listen(3000);
