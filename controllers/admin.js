@@ -16,10 +16,8 @@ exports.getEditProductPage = (request, response, next) => {
   }
 
   const prodId = request.params.productId;
-  request.user
-    .getProducts({ where: { id: prodId } })
-    .then((products) => {
-      const product = products[0];
+  Product.findById(prodId)
+    .then((product) => {
       if (!product) {
         return response.redirect("/");
       }
@@ -40,9 +38,18 @@ exports.postAddProduct = (request, response, next) => {
   const price = request.body.price;
   const description = request.body.description;
 
-  request.user
-    .createProduct({ title, imageUrl, price, description })
-    .then((product) => {
+  const product = new Product(
+    title,
+    price,
+    description,
+    imageUrl,
+    null,
+    request.user._id
+  );
+
+  product
+    .save()
+    .then(() => {
       console.log("Product created");
       response.redirect("/admin/products");
     })
@@ -58,15 +65,16 @@ exports.postEditProduct = (request, response, next) => {
   const updatedPrice = request.body.price;
   const updatedDescription = request.body.description;
 
-  Product.findByPk(prodId)
-    .then((product) => {
-      product.title = updatedTitle;
-      product.description = updatedDescription;
-      product.price = updatedPrice;
-      product.imageUrl = updatedImageUrl;
+  const product = new Product(
+    updatedTitle,
+    updatedPrice,
+    updatedDescription,
+    updatedImageUrl,
+    prodId
+  );
 
-      return product.save(); //sequelize
-    })
+  product
+    .save()
     .then((result) => {
       //handles first then
       console.log("UPDATED PRODUCT");
@@ -75,28 +83,24 @@ exports.postEditProduct = (request, response, next) => {
     .catch((err) => console.log(err));
 };
 
-exports.postDeleteProduct = (request, response, next) => {
-  const prodId = request.body.productId;
-  Product.findByPk(prodId)
-    .then((product) => {
-      return product.destroy();
-    })
-    .then((result) => {
-      console.log("DESTROYED PRODUCT");
-      response.redirect("/admin/products");
-    })
-    .catch((err) => console.log(err));
-};
-
 exports.getProducts = (request, response, next) => {
-  request.user
-    .getProducts()
+  Product.fetchAll()
     .then((products) => {
       response.render("admin/products", {
         prods: products,
         pageTitle: "Admin Products",
         path: "/admin/products",
       }); //use default template engine
+    })
+    .catch((err) => console.log(err));
+};
+
+exports.postDeleteProduct = (request, response, next) => {
+  const prodId = request.body.productId;
+  Product.deleteById(prodId)
+    .then(() => {
+      console.log("DESTROYED PRODUCT");
+      response.redirect("/admin/products");
     })
     .catch((err) => console.log(err));
 };

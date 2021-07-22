@@ -9,13 +9,9 @@ const shopRoutes = require("./routes/shop");
 
 const errorController = require("./controllers/error");
 
-const sequelize = require("./util/database");
-const Product = require("./models/product");
+const { mongoConnect } = require("./util/database");
+
 const User = require("./models/user");
-const Cart = require("./models/cart");
-const CartItem = require("./models/cart-item");
-const Order = require("./models/order");
-const OrderItem = require("./models/order-item");
 
 const app = express();
 
@@ -39,14 +35,21 @@ app.use(express.static(path.join(__dirname, "public"))); //for static files we w
 
 //middleware
 app.use((req, res, next) => {
-  User.findByPk(1)
+  User.findById("60f972f4a9e37c5aa487c4d9")
     .then((user) => {
-      req.user = user;
+      req.user = new User(user.name, user.email, user.cart, user._id);
       next();
     })
     .catch((err) => {
       console.log(err);
     });
+});
+
+app.use((req, res, next) => {
+  if (req.originalUrl.includes("favicon.ico")) {
+    res.status(204).end();
+  }
+  next();
 });
 
 //order matter, route with only '/' should be the last
@@ -55,36 +58,9 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-//Associations
-Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
-User.hasMany(Product);
-User.hasOne(Cart);
-Cart.belongsTo(User);
-Cart.belongsToMany(Product, { through: CartItem });
-Product.belongsToMany(Cart, { through: CartItem });
-Order.belongsTo(User);
-User.hasMany(Order);
-Order.belongsToMany(Product, { through: OrderItem });
+app.get("/favicon.ico", (req, res) => res.status(204));
 
-sequelize
-  .sync()
-  // .sync({ force: true })
-  .then((result) => {
-    return User.findByPk(1);
-    // console.log(result);
-  })
-  .then((user) => {
-    if (!user) {
-      return User.create({ name: "Quim", email: "test@test.com" });
-    }
-    return user;
-  })
-  .then((user) => {
-    return user.createCart();
-  })
-  .then((cart) => {
-    app.listen(3000);
-  })
-  .catch((err) => {
-    console.log(err);
-  }); //creates tables for models IF NOT EXISTS
+mongoConnect(() => {
+  // if()
+  app.listen(3000);
+});
