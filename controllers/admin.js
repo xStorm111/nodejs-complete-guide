@@ -38,17 +38,16 @@ exports.postAddProduct = (request, response, next) => {
   const price = request.body.price;
   const description = request.body.description;
 
-  const product = new Product(
-    title,
-    price,
-    description,
-    imageUrl,
-    null,
-    request.user._id
-  );
+  const product = new Product({
+    title: title,
+    price: price,
+    description: description,
+    imageUrl: imageUrl,
+    userId: request.user, //mongoose will reach _id by itself
+  });
 
   product
-    .save()
+    .save() //coming from mongoose
     .then(() => {
       console.log("Product created");
       response.redirect("/admin/products");
@@ -65,16 +64,14 @@ exports.postEditProduct = (request, response, next) => {
   const updatedPrice = request.body.price;
   const updatedDescription = request.body.description;
 
-  const product = new Product(
-    updatedTitle,
-    updatedPrice,
-    updatedDescription,
-    updatedImageUrl,
-    prodId
-  );
-
-  product
-    .save()
+  Product.findById(prodId)
+    .then((product) => {
+      product.title = updatedTitle;
+      product.price = updatedPrice;
+      product.description = updatedDescription;
+      product.imageUrl = updatedImageUrl;
+      return product.save();
+    })
     .then((result) => {
       //handles first then
       console.log("UPDATED PRODUCT");
@@ -84,7 +81,9 @@ exports.postEditProduct = (request, response, next) => {
 };
 
 exports.getProducts = (request, response, next) => {
-  Product.fetchAll()
+  Product.find()
+    // .select("title price -_id") //specific fields, with '-' we say we don't want _id
+    // .populate("userId") //add after find, populate certain field with all the detail information. First comment can be applied here on second argument
     .then((products) => {
       response.render("admin/products", {
         prods: products,
@@ -97,9 +96,9 @@ exports.getProducts = (request, response, next) => {
 
 exports.postDeleteProduct = (request, response, next) => {
   const prodId = request.body.productId;
-  Product.deleteById(prodId)
+  Product.findByIdAndRemove(prodId)
     .then(() => {
-      console.log("DESTROYED PRODUCT");
+      console.log("REMOVED PRODUCT");
       response.redirect("/admin/products");
     })
     .catch((err) => console.log(err));

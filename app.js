@@ -4,14 +4,17 @@ const express = require("express");
 const bodyParser = require("body-parser");
 // const expressHbs = require("express-handlebars");
 
+const User = require("./models/user");
+
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
 
 const errorController = require("./controllers/error");
 
-const { mongoConnect } = require("./util/database");
+// const { mongoConnect } = require("./util/database");
+const mongoose = require("mongoose");
 
-const User = require("./models/user");
+// const User = require("./models/user");
 
 const app = express();
 
@@ -35,9 +38,9 @@ app.use(express.static(path.join(__dirname, "public"))); //for static files we w
 
 //middleware
 app.use((req, res, next) => {
-  User.findById("60f972f4a9e37c5aa487c4d9")
+  User.findById("60f9aa195214cb63985e2956")
     .then((user) => {
-      req.user = new User(user.name, user.email, user.cart, user._id);
+      req.user = user;
       next();
     })
     .catch((err) => {
@@ -60,7 +63,28 @@ app.use(errorController.get404);
 
 app.get("/favicon.ico", (req, res) => res.status(204));
 
-mongoConnect(() => {
-  // if()
-  app.listen(3000);
-});
+// mongoConnect(() => {
+//   app.listen(3000);
+// });
+
+mongoose
+  .connect(
+    "mongodb+srv://joaquim-nodejs:Lz55SAZBtXJIF7i1@nodejscourse.8jnne.mongodb.net/shop?retryWrites=true&w=majority"
+  )
+  .then(() => {
+    User.findOne().then((user) => {
+      if (!user) {
+        const user = new User({
+          name: "user",
+          email: "user@user.com",
+          cart: {
+            items: [],
+          },
+        });
+
+        user.save();
+      }
+    });
+    app.listen(3000);
+  })
+  .catch((err) => console.log(err));
