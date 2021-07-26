@@ -8,6 +8,7 @@ exports.getProducts = (request, response, next) => {
         prods: products,
         pageTitle: "All Products",
         path: "/products",
+        isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
     .catch((err) => {
@@ -24,6 +25,7 @@ exports.getProductById = (request, response, next) => {
         product: product,
         pageTitle: product.title,
         path: "/products",
+        isAuthenticated: request.session.isLoggedIn,
       });
     })
     .catch((err) => console.log(err));
@@ -38,6 +40,7 @@ exports.getIndex = (request, response, next) => {
         prods: products,
         pageTitle: "Shop",
         path: "/",
+        isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
     .catch((err) => {
@@ -55,6 +58,7 @@ exports.getCart = (request, response, next) => {
         path: "/cart",
         pageTitle: "Your Cart",
         products: products,
+        isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
     .catch((err) => console.log(err));
@@ -115,6 +119,7 @@ exports.getOrders = (request, response, next) => {
         path: "/orders",
         pageTitle: "Your Orders",
         orders: orders,
+        isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
     .catch((err) => console.log(err));

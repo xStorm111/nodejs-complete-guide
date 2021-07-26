@@ -6,6 +6,7 @@ exports.getAddProductPage = (request, response, next) => {
     pageTitle: "Add Product",
     path: "/admin/add-product",
     editing: false,
+    isAuthenticated: request.session.isLoggedIn,
   });
 };
 
@@ -27,6 +28,7 @@ exports.getEditProductPage = (request, response, next) => {
         path: "/admin/edit-product",
         editing: editMode,
         product: product,
+        isAuthenticated: request.session.isLoggedIn,
       });
     })
     .catch((err) => console.log(err));
@@ -89,6 +91,7 @@ exports.getProducts = (request, response, next) => {
         prods: products,
         pageTitle: "Admin Products",
         path: "/admin/products",
+        isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
     .catch((err) => console.log(err));
