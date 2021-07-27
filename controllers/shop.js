@@ -40,7 +40,6 @@ exports.getIndex = (request, response, next) => {
         prods: products,
         pageTitle: "Shop",
         path: "/",
-        isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
     .catch((err) => {
@@ -97,7 +96,7 @@ exports.postOrder = (request, response, next) => {
       });
       const order = new Order({
         user: {
-          name: request.user.name,
+          email: request.user.email,
           userId: request.user,
         },
         products: products,
