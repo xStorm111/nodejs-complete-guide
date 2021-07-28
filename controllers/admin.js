@@ -51,7 +51,7 @@ exports.postAddProduct = (request, response, next) => {
     console.log(errors);
     return response.status(422).render("admin/edit-product", {
       pageTitle: "Add Product",
-      path: "/admin/edit-product",
+      path: "/admin/admin-product",
       editing: false,
       hasError: true,
       product: {
