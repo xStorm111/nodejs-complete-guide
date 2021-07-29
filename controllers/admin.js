@@ -170,8 +170,8 @@ exports.getProducts = (request, response, next) => {
     });
 };
 
-exports.postDeleteProduct = (request, response, next) => {
-  const prodId = request.body.productId;
+exports.deleteProduct = (request, response, next) => {
+  const prodId = request.params.productId;
   Product.findById(prodId)
     .then((product) => {
       if (!product) return next(new Error("Product not found"));
@@ -181,10 +181,10 @@ exports.postDeleteProduct = (request, response, next) => {
     })
     .then(() => {
       console.log("REMOVED PRODUCT");
-      response.redirect("/admin/products");
+      response.status(200).json({ message: "Success!" });
     })
     .catch((err) => {
-      return generate500Error(error);
+      response.status(500).json({ message: "Deleting product failed." });
     });
 };
 

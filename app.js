@@ -133,6 +133,7 @@ app.use(errorController.get404);
 
 //Express.js error handling middleware
 app.use((error, request, response, next) => {
+  console.log(error);
   response.redirect("/500");
 });
 
