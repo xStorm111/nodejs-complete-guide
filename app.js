@@ -7,6 +7,7 @@ const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session); //passed to a function that requires express-session
 const csrf = require("csurf");
 const flash = require("connect-flash");
+const multer = require("multer");
 // const expressHbs = require("express-handlebars");
 
 const errorController = require("./controllers/error");
@@ -33,6 +34,28 @@ const store = new MongoDBStore({
 
 const csrfProtection = csrf();
 
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    console.log(file.originalname);
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
 // app.engine(
 //   "hbs",
 //   expressHbs({
@@ -49,7 +72,11 @@ app.set("view engine", "ejs"); //compile view engine with pug
 app.set("views", "views"); //where to find the views for view engine
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+);
 app.use(express.static(path.join(__dirname, "public"))); //for static files we will assume that we are allready inside public folder
+app.use("/images", express.static(path.join(__dirname, "images"))); //static files for path with '/images'
 
 app.use(
   session({
@@ -63,7 +90,17 @@ app.use(
 app.use(csrfProtection);
 app.use(flash());
 
+//Needs to come after bodyParser and before routes
 app.use((request, response, next) => {
+  //method provided by express which allow us to pass local variables to all the views
+  response.locals.isAuthenticated = request.session.isLoggedIn;
+  response.locals.csrfToken = request.csrfToken();
+  next();
+});
+
+app.use((request, response, next) => {
+  //sync throw new Error(x)
+  //async aKa promise next(new Error(x))
   if (!request.session.user) {
     return next();
   }
@@ -72,7 +109,9 @@ app.use((request, response, next) => {
       request.user = user;
       next();
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      next(new Error(err));
+    });
 });
 
 //middleware
@@ -83,21 +122,21 @@ app.use((request, response, next) => {
 //   next();
 // });
 
-//Needs to come after bodyParser and before routes
-app.use((request, response, next) => {
-  //method provided by express which allow us to pass local variables to all the views
-  response.locals.isAuthenticated = request.session.isLoggedIn;
-  response.locals.csrfToken = request.csrfToken();
-  next();
-});
 //order matter, route with only '/' should be the last
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/500", errorController.get500);
+
 app.use(errorController.get404);
 
-// app.get("/favicon.ico", (req, res) => res.status(204));
+//Express.js error handling middleware
+app.use((error, request, response, next) => {
+  response.redirect("/500");
+});
+
+app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 // mongoConnect(() => {
 //   app.listen(3000);

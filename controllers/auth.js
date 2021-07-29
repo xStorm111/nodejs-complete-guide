@@ -96,7 +96,7 @@ exports.postLogin = (request, response, next) => {
         });
     })
     .catch((err) => {
-      console.log(err);
+      return generate500Error(err);
     });
 };
 
@@ -161,7 +161,7 @@ exports.postSignup = (request, response, next) => {
         html: "<h1>You successfully signed up!</h1>",
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
 };
 
 exports.postLogout = (request, response, next) => {
@@ -220,7 +220,7 @@ exports.postReset = (request, response, next) => {
         });
       })
       .catch((err) => {
-        console.log(err);
+        return generate500Error(err);
       });
   });
 };
@@ -244,7 +244,7 @@ exports.getNewPassword = (request, response, next) => {
         passwordToken: token,
       }); //use default template engine
     })
-    .catch((err) => console.error(err));
+    .catch((err) => generate500Error(err));
 };
 
 exports.postNewPassword = (request, response, next) => {
@@ -271,5 +271,11 @@ exports.postNewPassword = (request, response, next) => {
     .then((result) => {
       response.redirect("/login");
     })
-    .catch((err) => console.error(err));
+    .catch((err) => generate500Error(err));
+};
+
+generate500Error = (err) => {
+  const error = new Error(error.message);
+  error.httpStatusCode = 500;
+  return next(error);
 };

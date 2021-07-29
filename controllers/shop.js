@@ -1,3 +1,8 @@
+const fs = require("fs");
+const path = require("path");
+
+const PDFDocument = require("pdfkit");
+
 const Product = require("../models/product");
 const Order = require("../models/order");
 
@@ -12,7 +17,7 @@ exports.getProducts = (request, response, next) => {
       }); //use default template engine
     })
     .catch((err) => {
-      console.log(err);
+      generate500Error(err);
     });
 };
 
@@ -28,7 +33,7 @@ exports.getProductById = (request, response, next) => {
         isAuthenticated: request.session.isLoggedIn,
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
 
   // response.redirect("/");
 };
@@ -43,7 +48,7 @@ exports.getIndex = (request, response, next) => {
       }); //use default template engine
     })
     .catch((err) => {
-      console.log(err);
+      return generate500Error(err);
     });
 };
 
@@ -60,7 +65,7 @@ exports.getCart = (request, response, next) => {
         isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
 };
 
 exports.postCart = (request, response, next) => {
@@ -73,7 +78,7 @@ exports.postCart = (request, response, next) => {
       console.log(result);
       response.redirect("/cart");
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
 };
 
 exports.postCartDeleteProduct = (request, response, next) => {
@@ -83,7 +88,7 @@ exports.postCartDeleteProduct = (request, response, next) => {
     .then((result) => {
       response.redirect("/cart");
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
 };
 
 exports.postOrder = (request, response, next) => {
@@ -109,7 +114,7 @@ exports.postOrder = (request, response, next) => {
     .then(() => {
       response.redirect("/orders");
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
 };
 exports.getOrders = (request, response, next) => {
   Order.find({ "user.userId": request.user._id })
@@ -121,7 +126,62 @@ exports.getOrders = (request, response, next) => {
         isAuthenticated: request.session.isLoggedIn,
       }); //use default template engine
     })
-    .catch((err) => console.log(err));
+    .catch((err) => generate500Error(err));
+};
+
+exports.getInvoice = (request, response, next) => {
+  const orderId = request.params.orderId;
+
+  Order.findById(orderId)
+    .then((order) => {
+      if (!order) {
+        return next(new Error("No order found."));
+      }
+
+      if (order.user.userId.toString() !== request.user._id.toString()) {
+        return next(new Error("Unauthorized!"));
+      }
+
+      const invoiceName = "invoice-" + orderId + ".pdf";
+      const invoicePath = path.join("data", "invoices", invoiceName);
+
+      const pdfDoc = new PDFDocument();
+
+      response.setHeader("Content-Type", "application/pdf");
+      response.setHeader(
+        "Content-Disposition",
+        "attachment; filename=" + invoiceName + ""
+      );
+
+      //stream allows browser to download files step by step
+      //this way we avoid overflows on memory for large files.
+      pdfDoc.pipe(fs.createWriteStream(invoicePath));
+      pdfDoc.pipe(response);
+
+      pdfDoc.fontSize(26).text("Invoice", {
+        underline: true,
+      });
+
+      pdfDoc.text("--------------------------");
+      let totalPrice = 0;
+      order.products.forEach((prod) => {
+        totalPrice += prod.quantity * prod.product.price;
+        pdfDoc
+          .fontSize(14)
+          .text(
+            prod.product.title +
+              " - " +
+              prod.quantity +
+              " x " +
+              " $ " +
+              prod.product.price
+          );
+      });
+      pdfDoc.text("---");
+      pdfDoc.fontSize(20).text("Total Price: $" + totalPrice);
+      pdfDoc.end();
+    })
+    .catch((err) => next(err));
 };
 
 // exports.getCheckout = (request, response, next) => {
@@ -130,3 +190,9 @@ exports.getOrders = (request, response, next) => {
 //     pageTitle: "Checkout",
 //   }); //use default template engine
 // };
+
+generate500Error = (err) => {
+  const error = new Error(error.message);
+  error.httpStatusCode = 500;
+  return next(error);
+};
