@@ -1,0 +1,8 @@
+{
+  "env": {
+    "MONGO_USER": "joaquim-nodejs",
+    "MONGO_PASSWORD": "Lz55SAZBtXJIF7i1",
+    "MONGO_DEFAULT_DATABASE": "shop",
+    "STRIPE_KEY": "sk_test_51JIdNEBB7FqSWtsVk9ZhgiUJRYimvAZpMG4gUzJkh5mFQFwSy6yXxL1ARtgbWlZOpjJtaSyYcrHx3B4Y2wtlG6Zl003cKeoBng"
+  }
+}
